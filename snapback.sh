@@ -24,7 +24,7 @@ WEEKLY_ON="Sun"
 # specified below of the month.
 MONTHLY_ON="Sun"
 # Temporary file
-TEMP=/tmp/snapback.$$
+TEMPFILE=$(mktemp -t snap.XXXXXXXX)
 # UUID of the destination SR for backups
 DEST_SR=e871f2df-a195-9c50-5377-be55e749c003
 
@@ -182,12 +182,12 @@ for VM in $RUNNING_VMS; do
 	# Sort -n, head -n -$RETAIN
 	# Loop through and remove each one
 	echo "= Removing old backups ="
-	xe template-list | grep "$VM_NAME-$BACKUP_SUFFIX" | xe_param name-label | sort -n | head -n-$RETAIN > $TEMP
+	xe template-list | grep "$VM_NAME-$BACKUP_SUFFIX" | xe_param name-label | sort -n | head -n-$RETAIN > ${TEMPFILE}
 	while read OLD_TEMPLATE; do
 		OLD_TEMPLATE_UUID=$(xe template-list name-label="$OLD_TEMPLATE" | xe_param uuid)
 		echo "Removing : $OLD_TEMPLATE with UUID $OLD_TEMPLATE_UUID"
 		delete_template $OLD_TEMPLATE_UUID
-	done < $TEMP
+	done < ${TEMPFILE}
 	
 	# Also check there is no template with the current timestamp.
 	# Otherwise, you would not be able to backup more than once a day if you needed...
@@ -209,5 +209,5 @@ xe vdi-list sr-uuid=$DEST_SR > /var/run/sr-mount/$DEST_SR/mapping.txt
 xe vbd-list > /var/run/sr-mount/$DEST_SR/vbd-mapping.txt
 
 echo "=== Snapshot backup finished at $(date) ==="
-rm $TEMP
+rm ${TEMPFILE}
 rm $LOCKFILE
