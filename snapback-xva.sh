@@ -25,7 +25,7 @@ WEEKLY_ON="Sun"
 # specified below of the month.
 MONTHLY_ON="Sun"
 # Temporary file
-TEMP=/tmp/snapback.$$
+TEMPFILE=$(mktemp -t snap.XXXXXXXX)
 # UUID of the destination SR for backups
 TEMPLATE_SR=81548d46-4f0e-fada-927c-e2177eb49943
 # UUID of the destination SR for XVA files it must be an NFS SR
@@ -233,18 +233,18 @@ for VM in $RUNNING_VMS; do
         fi
         TEMPLATE_UUID=$(xe snapshot-copy uuid=$SNAPSHOT_UUID sr-uuid=$TEMPLATE_SR new-name-description="Snapshot created on $(date)" new-name-label="$VM_NAME-$TEMP_SUFFIX")
         echo "Done."
-        
+
         # List templates for all VMs, grep for $VM_NAME-$BACKUP_SUFFIX
         # Sort -n, head -n -$RETAIN
         # Loop through and remove each one
         echo "= Removing old template backups ="
-        xe template-list | grep "$VM_NAME-$BACKUP_SUFFIX" | xe_param name-label | sort -n | head -n-$RETAIN > $TEMP
+        xe template-list | grep "$VM_NAME-$BACKUP_SUFFIX" | xe_param name-label | sort -n | head -n-$RETAIN > ${TEMPFILE}
         while read OLD_TEMPLATE; do
             OLD_TEMPLATE_UUID=$(xe template-list name-label="$OLD_TEMPLATE" | xe_param uuid)
             echo "Removing : $OLD_TEMPLATE with UUID $OLD_TEMPLATE_UUID"
             delete_template $OLD_TEMPLATE_UUID
-        done < $TEMP
-        
+        done < ${TEMPFILE}
+
         # Also check there is no template with the current timestamp.
         # Otherwise, you would not be able to backup more than once a day if you needed...
         TODAYS_TEMPLATE="$(xe template-list name-label="$VM_NAME-$BACKUP_SUFFIX-$BACKUP_DATE" | xe_param uuid)"
@@ -270,11 +270,11 @@ for VM in $RUNNING_VMS; do
         # Sort -n, head -n -$RETAIN
         # Loop through and remove each one
         echo "= Removing old XVA files ="
-        ls -1 /var/run/sr-mount/$XVA_SR/*.xva | grep "$VM_NAME-$BACKUP_SUFFIX" | sort -n | head -n-$XVA_RETAIN > $TEMP
+        ls -1 /var/run/sr-mount/$XVA_SR/*.xva | grep "$VM_NAME-$BACKUP_SUFFIX" | sort -n | head -n-$XVA_RETAIN > ${TEMPFILE}
         while read OLD_TEMPLATE; do
             echo "Removing : $OLD_TEMPLATE"
             rm $OLD_TEMPLATE
-        done < $TEMP
+        done < ${TEMPFILE}
     fi
 
     echo "= Removing temporary snapshot backup ="
@@ -298,7 +298,7 @@ xe-backup-metadata -c -k 10 -u $TEMPLATE_SR
 echo "=== Metadata backup finished at $(date) ==="
 echo " "
 
-rm $TEMP
+rm ${TEMPFILE}
 rm $LOCKFILE
 
 # vim: ai ts=4 sw=4 tw=78 expandtab :
