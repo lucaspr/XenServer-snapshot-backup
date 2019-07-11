@@ -182,51 +182,49 @@ for VM in $RUNNING_VMS; do
 	DISKNAME=$(xe vm-disk-list uuid=$VM | grep $TEMPDISKNAME | xe_param name-label)
         if [ -z "$DISKNAME" ]
         then
-                echo 'No temporary disk attached to VM!'
-				echo "= Creating snapshot backup ="
-				# Select appropriate snapshot command
-				# See above - not using this yet, as have to work around failures
-				#if [ "$QUIESCE" == "true" ]; then
-				#	echo "Using VSS plugin"
-				#	SNAPSHOT_CMD="vm-snapshot-with-quiesce"
-				#else
-				#	echo "Not using VSS plugin, disks will not be quiesced"
-				#	SNAPSHOT_CMD="vm-snapshot"
-				#fi
-				SNAPSHOT_CMD="vm-snapshot"
-				SNAPSHOT_UUID=$(xe $SNAPSHOT_CMD vm="$VM_NAME" new-name-label="$VM_NAME-$SNAPSHOT_SUFFIX")
-				echo "Created snapshot with UUID : $SNAPSHOT_UUID"
+                echo "= Checking for temporary removable disks ="
+                echo '=No temporary disk attached to $VM_NAME='
+		echo "= Creating snapshot backup ="
+		# Select appropriate snapshot command
+		# See above - not using this yet, as have to work around failures
+		#if [ "$QUIESCE" == "true" ]; then
+		#	echo "Using VSS plugin"
+		#	SNAPSHOT_CMD="vm-snapshot-with-quiesce"
+		#else
+		#	echo "Not using VSS plugin, disks will not be quiesced"
+		#	SNAPSHOT_CMD="vm-snapshot"
+		#fi
+		SNAPSHOT_CMD="vm-snapshot"
+		SNAPSHOT_UUID=$(xe $SNAPSHOT_CMD vm="$VM_NAME" new-name-label="$VM_NAME-$SNAPSHOT_SUFFIX")
+		echo "Created snapshot with UUID : $SNAPSHOT_UUID"
         else
         {
+		echo "= Checking for temporary removable disks ="
+                echo "     Temporary disk $DISKNAME found   "
                 DISKUUID=$(xe vdi-list name-label=$DISKNAME | xe_param uuid)
-                echo 'UUID of Disk:'
-                echo $DISKUUID
-                echo 'Name of Disk:'
-                echo $DISKNAME
                 VBDUUID=$(xe vdi-list name-label="$DISKNAME" params | xe_param vbd-uuids)
-                echo VBD UUID:
-                echo $VBDUUID
                 DEVICENUMBER=$(xe vbd-list uuid=$VBDUUID params | xe_param userdevice)
-                echo Device number: $DEVICENUMBER
-                echo 'Detaching VDI'
+		# Little more info for debugging or troubleshooting
+		echo '= Removing $DISKNAME from VM: $VM_NAME with devicenumber: $DEVICENUMBER and VDI-UUID:$DISKUUID ='
                 xe vbd-unplug uuid=$VBDUUID
                 xe vbd-destroy uuid=$VBDUUID
-                echo "Nu snapshot maken"
                 echo "= Creating snapshot backup ="
-				# Select appropriate snapshot command
-				# See above - not using this yet, as have to work around failures
-				#if [ "$QUIESCE" == "true" ]; then
-				#	echo "Using VSS plugin"
-				#	SNAPSHOT_CMD="vm-snapshot-with-quiesce"
-				#else
-				#	echo "Not using VSS plugin, disks will not be quiesced"
-				#	SNAPSHOT_CMD="vm-snapshot"
-				#fi
-				SNAPSHOT_CMD="vm-snapshot"
-				SNAPSHOT_UUID=$(xe $SNAPSHOT_CMD vm="$VM_NAME" new-name-label="$VM_NAME-$SNAPSHOT_SUFFIX")
-				echo "Created snapshot with UUID : $SNAPSHOT_UUID"
+		# Select appropriate snapshot command
+		# See above - not using this yet, as have to work around failures
+		#if [ "$QUIESCE" == "true" ]; then
+		#	echo "Using VSS plugin"
+		#	SNAPSHOT_CMD="vm-snapshot-with-quiesce"
+		#else
+		#	echo "Not using VSS plugin, disks will not be quiesced"
+		#	SNAPSHOT_CMD="vm-snapshot"
+		#fi
+		SNAPSHOT_CMD="vm-snapshot"
+		SNAPSHOT_UUID=$(xe $SNAPSHOT_CMD vm="$VM_NAME" new-name-label="$VM_NAME-$SNAPSHOT_SUFFIX")
+		echo "Created snapshot with UUID : $SNAPSHOT_UUID"
                 xe vbd-create vm-uuid=$VM vdi-uuid=$DISKUUID device=$DEVICENUMBER
-                # Now there's a new VBD UUID for the re-attached disk...
+                # Retrieve a new VBD UUID for the re-attached (unplugged) disk...
+		echo "= Attaching removed disks before copying snapshot ="
+                echo '= Attach $DISKNAME to VM: $VM_NAME with devicenumber: $DEVICENUMBER and VDI-UUID:$DISKUUID ='
                 VBDUUIDNEW=$(xe vdi-list name-label="$DISKNAME" params | xe_param vbd-uuids)
                 xe vbd-plug uuid=$VBDUUIDNEW
 	}
