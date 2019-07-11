@@ -44,8 +44,8 @@ MASTER=$(xe pool-list params=master | egrep -o "[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]
 LOCKFILE=/tmp/snapback.lock
 
 # Set info for ssmtp mail
-MAILTO="info@hartmannautomatisering.nl"
-MAILFROM="xenserver1@hartmannautomatisering.nl"
+MAILTO="info@example.com"
+MAILFROM="xenserver@example.domain"
 SUBJECT="VHD Backup" 
 
 if [ -f $LOCKFILE ]; then
@@ -298,7 +298,7 @@ xe vdi-list sr-uuid=$DEST_SR > /var/run/sr-mount/$DEST_SR/mapping.txt
 xe vbd-list > /var/run/sr-mount/$DEST_SR/vbd-mapping.txt
 
 echo "=== Snapshot backup finished at $(date) ==="
-/usr/sbin/ssmtp info@hartmannautomatisering.nl < /var/log/snapback.log
+/usr/sbin/ssmtp receiver@example.com < /var/log/snapback.log
 rm $TEMPFILE
 
 rm $LOCKFILE
