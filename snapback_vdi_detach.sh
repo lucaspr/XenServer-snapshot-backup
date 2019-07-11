@@ -178,23 +178,7 @@ for VM in $RUNNING_VMS; do
 		delete_snapshot $VM_SNAPSHOT_CHECK
 	fi
 	echo "Done."
-
-						   
-
-																						   
-												   
-
-					
-		
-   
-			  
-			
-		   
-				  
-		   
-		
-			
-   
+	
 	DISKNAME=$(xe vm-disk-list uuid=$VM | grep $TEMPDISKNAME | xe_param name-label)
         if [ -z "$DISKNAME" ]
         then
@@ -245,6 +229,7 @@ for VM in $RUNNING_VMS; do
                 # Now there's a new VBD UUID for the re-attached disk...
                 VBDUUIDNEW=$(xe vdi-list name-label="$DISKNAME" params | xe_param vbd-uuids)
                 xe vbd-plug uuid=$VBDUUIDNEW
+	}
 	fi
 	echo "= Copying snapshot to SR ="
 	# Check there isn't a stale template with TEMP_SUFFIX name hanging around from a failed job
