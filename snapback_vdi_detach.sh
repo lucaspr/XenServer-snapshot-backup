@@ -7,8 +7,7 @@
 # Mark Round, scripts@markround.com
 # http://www.markround.com/snapback
 # 
-# Additions by Luuk Prins & 
-# 
+#  
 #
 # 1.8 : Changed Tempfile creation 
 # 1.7 : Added support for removing a temporary VDI (with non-important temp files)
