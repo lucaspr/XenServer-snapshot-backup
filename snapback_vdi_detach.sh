@@ -280,7 +280,7 @@ xe vdi-list sr-uuid=$DEST_SR > /var/run/sr-mount/$DEST_SR/mapping.txt
 xe vbd-list > /var/run/sr-mount/$DEST_SR/vbd-mapping.txt
 
 echo "=== Snapshot backup finished at $(date) ==="
-/usr/sbin/ssmtp receiver@example.com < /var/log/snapback.log
+/usr/sbin/ssmtp $MAILTO < /var/log/snapback.log
 rm $TEMPFILE
 
 rm $LOCKFILE
